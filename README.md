@@ -48,3 +48,29 @@ The contract lives in [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.
 ```
 npx @redocly/cli lint openapi/openapi.yaml
 ```
+
+## Known gaps
+
+Things that are missing, simplified or only half done. Nothing here is forgotten: each item is a deliberate deferral.
+
+### Contract
+
+- **`409` is not implemented.** The spec describes it for `createOrder` (same `Idempotency-Key` still being processed), but the code never returns it.
+- **Order statuses.** `paid`, `shipped` and `cancelled` are in the model, but nothing sets them; every order stays `pending`.
+- **Sort order is not part of the contract.** The code returns lists newest first (`created_at` descending, `id` as tie-breaker), but the spec does not promise it. A `sort` parameter needs cursors tied to the sort field.
+- **No authentication or authorization.** The spec has no `securitySchemes`, so the Redocly linter reports `security-defined` errors. It also warns about the missing `license` and the `localhost` server.
+- **Problem `type` values.** Only `validation-error` and `about:blank` exist, and the documentation URL behind `validation-error` does not exist. Business errors (unknown product, reused key, ...) should get their own types.
+- **Idempotency only on `POST /orders`.** `POST /products` does not take an `Idempotency-Key`.
+
+### Implementation
+
+- **In-memory data.** Products, orders and idempotency keys live in process memory and disappear on restart.
+- **Idempotency keys are simplified.** They are kept forever (no TTL), are shared by all clients (not scoped per user) and concurrent duplicates are not handled.
+- **Error responses are not checked against the spec.** The exception filter sends `problem+json` as a raw string, so the response validator never sees it. The `Problem` shape is duplicated in the code and in the spec.
+- **Response headers are not verified.** `Location` and `Idempotency-Replay` are set by hand and described in the spec, but nothing checks them.
+- **No automated tests.** Behaviour was verified by hand with `curl`; there are no contract tests (for example Pact) yet.
+
+### Tooling
+
+- **Node.js 20.12.1 is too old** for the Nest 12 CLI and the latest Redocly CLI, so the project is built with plain `tsc` and started with `node`. Upgrading to Node 22 LTS would allow `nest start`.
+- **Express 5 instead of Express 4.** NestJS 12 ships with Express 5; `express-openapi-validator` works with it in all checks so far.
