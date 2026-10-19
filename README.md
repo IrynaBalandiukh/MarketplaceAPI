@@ -49,6 +49,44 @@ The contract lives in [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.
 npx @redocly/cli lint openapi/openapi.yaml
 ```
 
+## Step 2: The server
+
+A NestJS server (in-memory data) that enforces the spec at runtime. The spec is the single
+source of truth: the code has no separate validation rules (no DTO validation).
+
+```
+npm install
+npm start      # builds with tsc and listens on http://localhost:3000/v1
+```
+
+### Key parts
+
+- **Validation at the border.** `express-openapi-validator` runs as middleware in
+  `src/main.ts`. It checks every request and every response against
+  `openapi/openapi.yaml` (`validateRequests` and `validateResponses`). A request that breaks
+  the spec never reaches a controller; a response that breaks it becomes a `500`, and the
+  real cause is logged.
+- **Errors as `problem+json`.** `ProblemFilter` (`src/problem.filter.ts`) turns every error,
+  from the validator and from Nest alike, into the `Problem` schema from the spec.
+  Unexpected errors return no details to the client.
+- **URI versioning.** `enableVersioning` serves all routes under `/v1`, matching `servers`.
+- **Cursor pagination.** `paginate()` (`src/common/pagination.ts`) is shared by products and
+  orders. The cursor is an opaque base64url token.
+- **Idempotency.** `POST /orders` stores the `Idempotency-Key` with a fingerprint of the body.
+  A repeat returns the same order with `Idempotency-Replay: true`; the same key with a
+  different body returns `422`.
+
+### Structure
+
+```
+src/
+  main.ts            validator middleware, versioning, error filter
+  problem.filter.ts  errors -> application/problem+json
+  common/            shared cursor pagination
+  products/          controller, service, module (GET, POST /products, GET /products/{id})
+  orders/            controller, service, module (GET, POST /orders, GET /orders/{id})
+```
+
 ## Known gaps
 
 Things that are missing, simplified or only half done. Nothing here is forgotten: each item is a deliberate deferral.
