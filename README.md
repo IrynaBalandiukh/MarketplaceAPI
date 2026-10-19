@@ -46,8 +46,12 @@ The contract lives in [`openapi/openapi.yaml`](openapi/openapi.yaml) (OpenAPI 3.
 ### Checking the spec itself
 
 ```
-npx @redocly/cli lint openapi/openapi.yaml
+npm run lint:spec
 ```
+
+The script is [`scripts/lint-spec.mjs`](scripts/lint-spec.mjs). It runs `redocly lint` on
+`openapi/openapi.yaml` (the CLI is a devDependency) and passes its exit code through: warnings
+are allowed, errors fail with a non-zero code.
 
 ## Step 2: The server
 
@@ -56,8 +60,14 @@ source of truth: the code has no separate validation rules (no DTO validation).
 
 ```
 npm install
-npm start      # builds with tsc and listens on http://localhost:3000/v1
+cp .env.example .env   # Windows cmd/PowerShell: copy .env.example .env
+npm start              # builds with tsc and listens on http://localhost:3000/v1
 ```
+
+The server will not start without a valid `.env`; see Step 3.
+
+`npm start` builds once and exits with the server's exit code. For development use
+`npm run start:dev`: it rebuilds on every change and restarts the server (`tsc-watch`).
 
 ### Key parts
 
@@ -88,7 +98,35 @@ src/
   common/            shared cursor pagination
   products/          controller, service, module (GET, POST /products, GET /products/{id})
   orders/            controller, service, module (GET, POST /orders, GET /orders/{id})
+  config/            env schema (zod) and its validation
 ```
+
+## Step 3: Configuration
+
+Every environment variable is described once, by a zod schema in
+[`src/config/env.schema.ts`](src/config/env.schema.ts). The schema runs at start-up through
+`ConfigModule.forRoot({ validate })`, so a broken variable stops the process before the server
+listens: the output names the variable and the reason, and the exit code is not 0.
+
+```
+Error: Invalid environment variables:
+  - PORT: Invalid input: expected number, received NaN
+```
+
+| Variable | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `PORT` | integer 1-65535 | `3000` | HTTP port |
+| `DB_PASSWORD_FILE` | string | required | Path to the file with the database password |
+
+- **Typed config only.** Code reads settings through `ConfigService<Env, true>`; nothing reads
+  `process.env` outside the schema. Numbers are coerced with `z.coerce`; an empty `PORT=` is
+  still rejected, because `z.coerce.number()` alone would turn it into `0`.
+- **Only a path for the password.** `DB_PASSWORD_FILE` points to a secret file; the password
+  itself never lives in env.
+- **`.env.example` is the contract.** It lists every variable of the schema with a comment.
+  The real `.env` is git-ignored.
+- **`npm run check:env`** compares `.env.example` with the schema and exits with 1 when a
+  variable is missing, unknown or has no comment above it.
 
 ## Known gaps
 
@@ -105,6 +143,8 @@ Things that are missing, simplified or only half done. Nothing here is forgotten
 
 ### Implementation
 
+- **`DB_PASSWORD_FILE` is not used yet.** The variable is required and validated as a non-empty string, but there is no database in the app and nothing reads the file; the existence of the file is not checked either.
+- **Response validation cannot be switched off.** `validateResponses` is hard-coded to `true`. A `VALIDATE_RESPONSES` variable (`true` or `false`, default `true`) is planned, so that it can be disabled in production, where checking every response costs time and a harmless drift would turn into a `500`.
 - **In-memory data.** Products, orders and idempotency keys live in process memory and disappear on restart.
 - **Idempotency keys are simplified.** They are kept forever (no TTL), are shared by all clients (not scoped per user) and concurrent duplicates are not handled.
 - **Error responses are not checked against the spec.** The exception filter sends `problem+json` as a raw string, so the response validator never sees it. The `Problem` shape is duplicated in the code and in the spec.
