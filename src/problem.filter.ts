@@ -16,8 +16,8 @@ interface Problem {
   type: string;
   title: string;
   status: number;
-  detail?: string;
-  instance?: string;
+  detail: string;
+  instance: string;
 }
 
 const TITLES: Record<number, string> = {
@@ -64,19 +64,26 @@ export class ProblemFilter implements ExceptionFilter {
         ? err.errors.map((e) => `${e.path}: ${e.message}`).join("; ")
         : err?.message;
       this.logger.error(`${req.method} ${instance} -> ${cause}`);
-      return { type: "about:blank", title: TITLES[500], status: 500, instance };
+      return {
+        type: "about:blank",
+        title: TITLES[500],
+        status: 500,
+        detail: "An unexpected error occurred",
+        instance,
+      };
     }
 
+    const title = TITLES[status] ?? "Error";
     const detail = err?.errors?.length
       ? err.errors.map((e) => `${e.path}: ${e.message}`).join("; ")
-      : this.messageOf(exception);
+      : (this.messageOf(exception) ?? title);
 
     return {
       type:
         status === 400 && err?.errors?.length
           ? "https://api.marketplace.example/problems/validation-error"
           : "about:blank",
-      title: TITLES[status] ?? "Error",
+      title,
       status,
       detail,
       instance,

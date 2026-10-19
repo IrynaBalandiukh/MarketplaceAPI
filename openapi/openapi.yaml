@@ -116,7 +116,18 @@ paths:
         If the first request with this key is still being processed, the repeat
         is rejected with 409 and can be retried later.
       parameters:
-        - $ref: "#/components/parameters/IdempotencyKey"
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            Unique key chosen by the client (a UUID is recommended) that identifies
+            one logical operation. Retrying a request with the same key and the same
+            body returns the original response instead of repeating the operation.
+            Use a new key for every new operation.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
         required: true
         content:
@@ -192,19 +203,6 @@ components:
         minimum: 1
         maximum: 100
         default: 20
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: true
-      description: |
-        Unique key chosen by the client (a UUID is recommended) that identifies
-        one logical operation. Retrying a request with the same key and the same
-        body returns the original response instead of repeating the operation.
-        Use a new key for every new operation.
-      schema:
-        type: string
-        minLength: 1
-        maxLength: 255
     Cursor:
       name: cursor
       in: query
@@ -344,7 +342,7 @@ components:
     Problem:
       type: object
       description: Error details according to RFC 9457.
-      required: [type, title, status]
+      required: [type, title, status, detail, instance]
       properties:
         type:
           type: string
