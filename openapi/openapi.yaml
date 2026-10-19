@@ -10,6 +10,8 @@ servers:
   - url: http://localhost:3000/v1
     description: Local development (API version 1, URI versioning)
 
+security: []
+
 tags:
   - name: Products
     description: Product catalog

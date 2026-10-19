@@ -99,7 +99,7 @@ Things that are missing, simplified or only half done. Nothing here is forgotten
 - **`409` is not implemented.** The spec describes it for `createOrder` (same `Idempotency-Key` still being processed), but the code never returns it.
 - **Order statuses.** `paid`, `shipped` and `cancelled` are in the model, but nothing sets them; every order stays `pending`.
 - **Sort order is not part of the contract.** The code returns lists newest first (`created_at` descending, `id` as tie-breaker), but the spec does not promise it. A `sort` parameter needs cursors tied to the sort field.
-- **No authentication or authorization.** The spec has no `securitySchemes`, so the Redocly linter reports `security-defined` errors. It also warns about the missing `license` and the `localhost` server.
+- **No authentication or authorization.** The spec declares this explicitly with a root-level `security: []`. The Redocly linter still warns about the missing `license` and the `localhost` server.
 - **Problem `type` values.** Only `validation-error` and `about:blank` exist, and the documentation URL behind `validation-error` does not exist. Business errors (unknown product, reused key, ...) should get their own types.
 - **Idempotency only on `POST /orders`.** `POST /products` does not take an `Idempotency-Key`.
 
