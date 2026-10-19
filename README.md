@@ -70,6 +70,9 @@ npm start      # builds with tsc and listens on http://localhost:3000/v1
   from the validator and from Nest alike, into the `Problem` schema from the spec.
   Unexpected errors return no details to the client.
 - **URI versioning.** `enableVersioning` serves all routes under `/v1`, matching `servers`.
+- **Swagger UI.** Interactive docs are served at `http://localhost:3000/docs`. They are built
+  straight from `openapi/openapi.yaml` (`swagger-ui-express`), so the page can never drift
+  from the contract. "Try it out" sends real requests to the running server.
 - **Cursor pagination.** `paginate()` (`src/common/pagination.ts`) is shared by products and
   orders. The cursor is an opaque base64url token.
 - **Idempotency.** `POST /orders` stores the `Idempotency-Key` with a fingerprint of the body.
