@@ -4,7 +4,6 @@ import { ConfigService } from "@nestjs/config";
 import pg from "pg";
 import type { Env } from "../config/env.schema.js";
 
-const DB_HOST = "localhost";
 const DB_PORT = 5432;
 const DB_USER = "app";
 const DB_NAME = "marketplace";
@@ -15,10 +14,11 @@ export class DatabaseService implements OnModuleDestroy {
   private readonly pool: pg.Pool;
 
   constructor(config: ConfigService<Env, true>) {
+    const host = config.get("DB_HOST", { infer: true });
     const passwordFile = config.get("DB_PASSWORD_FILE", { infer: true });
 
     this.pool = new pg.Pool({
-      host: DB_HOST,
+      host,
       port: DB_PORT,
       user: DB_USER,
       database: DB_NAME,

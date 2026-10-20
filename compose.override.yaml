@@ -1,0 +1,18 @@
+# Local development extras. Compose merges this file into compose.yaml automatically.
+# For a run without it: docker compose -f compose.yaml up -d
+services:
+  postgres:
+    ports:
+      # Lets you reach the database from the host (psql, DBeaver, `npm run start:dev`).
+      - "127.0.0.1:5432:5432"
+
+  api:
+    command: npm run start:dev
+    environment:
+      NODE_ENV: development
+      # File events from a Windows bind mount do not reach the container, so tsc polls instead.
+      TSC_WATCHFILE: PriorityPollingInterval
+      TSC_WATCHDIRECTORY: RecursivelyPollingDirectories
+    volumes:
+      - ./src:/app/src
+      - ./openapi:/app/openapi

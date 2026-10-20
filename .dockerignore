@@ -8,3 +8,5 @@ db
 compose.yaml
 Dockerfile
 .dockerignore
+*.md
+compose.override.yaml

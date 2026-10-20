@@ -5,8 +5,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres-admin-dev-only
       POSTGRES_DB: marketplace
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - pgdata:/var/lib/postgresql/data
@@ -15,6 +13,23 @@ services:
       interval: 2s
       timeout: 3s
       retries: 15
+
+  api:
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      PORT: "3000"
+      DB_HOST: postgres
+      DB_PASSWORD_FILE: /run/secrets/db_password
+    volumes:
+      # The whole directory, not the single file: scripts/rotate.sh replaces the file (mv), and a
+      # single-file bind mount would keep pointing at the old one. Same for top-level `secrets:`.
+      - ./secrets:/run/secrets:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:
