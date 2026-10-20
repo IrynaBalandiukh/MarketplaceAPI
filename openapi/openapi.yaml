@@ -63,8 +63,6 @@ paths:
                 $ref: "#/components/schemas/Product"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "422":
-          $ref: "#/components/responses/UnprocessableEntity"
 
   /products/{product_id}:
     parameters:
@@ -80,6 +78,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -113,8 +113,6 @@ paths:
         repeating a request with the same key and the same body returns the same
         response as the first request (same status and body) and does not create
         a second order. Reusing a key with a different body is rejected with 422.
-        If the first request with this key is still being processed, the repeat
-        is rejected with 409 and can be retried later.
       parameters:
         - name: Idempotency-Key
           in: header
@@ -154,8 +152,6 @@ paths:
                 $ref: "#/components/schemas/Order"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "409":
-          $ref: "#/components/responses/Conflict"
         "422":
           $ref: "#/components/responses/UnprocessableEntity"
 
@@ -173,6 +169,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
 
@@ -362,19 +360,13 @@ components:
 
   responses:
     BadRequest:
-      description: The request is malformed (invalid JSON, bad query parameter).
+      description: The request is malformed (invalid JSON, bad query parameter, malformed path parameter, missing required header).
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
     NotFound:
       description: The requested resource does not exist.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
-    Conflict:
-      description: A request with the same Idempotency-Key is still being processed.
       content:
         application/problem+json:
           schema:

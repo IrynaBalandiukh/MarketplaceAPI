@@ -1,0 +1,10 @@
+# Secrets and local state must never reach the image layers.
+.env
+secrets
+.git
+node_modules
+dist
+db
+compose.yaml
+Dockerfile
+.dockerignore
