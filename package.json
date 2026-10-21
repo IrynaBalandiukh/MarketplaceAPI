@@ -7,7 +7,10 @@
     "start:dev": "tsc-watch -p tsconfig.build.json --onSuccess \"node dist/main.js\"",
     "lint:spec": "node scripts/lint-spec.mjs",
     "check:env": "npm run build && node scripts/check-env-example.mjs",
-    "db:rotate": "bash scripts/rotate.sh"
+    "db:rotate": "bash scripts/rotate.sh",
+    "db:schema": "docker compose exec -T postgres psql -U app -d marketplace -v ON_ERROR_STOP=1 -1 < db/schema.sql",
+    "db:indexes": "docker compose exec -T postgres psql -U app -d marketplace -v ON_ERROR_STOP=1 -1 < db/indexes.sql",
+    "db:seed": "docker compose exec -T postgres psql -U app -d marketplace -v ON_ERROR_STOP=1 < db/seed.sql"
   },
   "dependencies": {
     "@nestjs/common": "^12.1.3",

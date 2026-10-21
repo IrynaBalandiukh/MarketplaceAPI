@@ -2,7 +2,9 @@ import { z } from "zod";
 
 export const EnvSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-  DB_HOST: z.string().min(1).default("localhost"),
+  DB_URL: z
+    .url({ protocol: /^postgres(ql)?$/ })
+    .refine((url) => new URL(url).pathname.length > 1, "must name a database, e.g. /marketplace"),
   DB_PASSWORD_FILE: z.string().min(1),
 });
 

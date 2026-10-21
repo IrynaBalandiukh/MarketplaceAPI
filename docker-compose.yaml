@@ -21,7 +21,7 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       PORT: "3000"
-      DB_HOST: postgres
+      DB_URL: postgres://app@postgres:5432/marketplace
       DB_PASSWORD_FILE: /run/secrets/db_password
     volumes:
       # The whole directory, not the single file: scripts/rotate.sh replaces the file (mv), and a

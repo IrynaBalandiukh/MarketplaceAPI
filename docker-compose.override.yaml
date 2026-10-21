@@ -1,5 +1,5 @@
-# Local development extras. Compose merges this file into compose.yaml automatically.
-# For a run without it: docker compose -f compose.yaml up -d
+# Local development extras. Compose merges this file into docker-compose.yaml automatically.
+# For a run without it: docker compose -f docker-compose.yaml up -d
 services:
   postgres:
     ports:
@@ -7,6 +7,8 @@ services:
       - "127.0.0.1:5432:5432"
 
   api:
+    build:
+      target: builder
     command: npm run start:dev
     environment:
       NODE_ENV: development

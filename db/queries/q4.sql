@@ -1,0 +1,1 @@
+SELECT id, title AS name, ts_rank(search_vector, plainto_tsquery('simple', 'вінтажний рюкзак')) AS rank FROM products WHERE search_vector @@ plainto_tsquery('simple', 'вінтажний рюкзак') ORDER BY rank DESC, id LIMIT 20

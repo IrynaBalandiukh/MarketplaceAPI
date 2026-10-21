@@ -113,10 +113,11 @@ Error: Invalid environment variables:
   - PORT: Invalid input: expected number, received NaN
 ```
 
-| Variable | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `PORT` | integer 1-65535 | `3000` | HTTP port |
-| `DB_PASSWORD_FILE` | string | required | Path to the file with the database password |
+| Variable | Type | Default | Meaning | Source |
+| --- | --- | --- | --- | --- |
+| `PORT` | integer 1-65535 | `3000` | HTTP port | `.env` (dev), `docker-compose.yaml` |
+| `DB_URL` | postgres URL | required | Host, port, user and database, e.g. `postgres://app@localhost:5432/marketplace`. No password in it: that comes from `DB_PASSWORD_FILE` | the secrets storage from HW #11: `secrets/` (the password, git-ignored, `secrets/db_password.example` is the template) plus the environment's own config (`.env` in dev, `docker-compose.yaml` in Compose, host `postgres`; the same variable in prod) |
+| `DB_PASSWORD_FILE` | string | required | Path to the file with the database password | `.env`, `docker-compose.yaml`; the file itself is in `secrets/` (git-ignored) |
 
 - **Typed config only.** Code reads settings through `ConfigService<Env, true>`; nothing reads
   `process.env` outside the schema. Numbers are coerced with `z.coerce`; an empty `PORT=` is
@@ -127,6 +128,29 @@ Error: Invalid environment variables:
   The real `.env` is git-ignored.
 - **`npm run check:env`** compares `.env.example` with the schema and exits with 1 when a
   variable is missing, unknown or has no comment above it.
+
+## Step 4: Database
+
+PostgreSQL 16 in Docker. Tables: `users`, `products` (main table, 150 000 rows after the seed; the
+full-text search of query q4 runs on the same table, column `search_vector`), `orders`, `order_items`.
+The dev credentials of the container are in `docker-compose.yaml`; the `app` password is the file
+`secrets/db_password`, created from the committed `secrets/db_password.example`.
+
+Bring the database up (a fresh clone, no manual edits):
+
+```
+cp secrets/db_password.example secrets/db_password && docker compose up -d --wait postgres
+```
+
+Connect:
+
+```
+docker compose exec postgres psql -U app -d marketplace
+```
+
+Then, in this order: `npm run db:schema`, `npm run db:seed`, the four queries of `db/queries/`
+with `EXPLAIN (ANALYZE, BUFFERS)`, `npm run db:indexes`, the same four again. The report with both
+plans of every query is [`db/OPTIMIZATIONS.md`](db/OPTIMIZATIONS.md).
 
 ## Known gaps
 

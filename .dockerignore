@@ -5,8 +5,8 @@ secrets
 node_modules
 dist
 db
-compose.yaml
+docker-compose.yaml
 Dockerfile
 .dockerignore
 *.md
-compose.override.yaml
+docker-compose.override.yaml
