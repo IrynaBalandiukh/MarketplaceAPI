@@ -69,7 +69,7 @@ INSERT INTO _adj VALUES
 -- Products ----------------------------------------------------------------------------------
 -- Only the first 2 000 users sell, and the lower the number, the more they sell (random()^2.5).
 -- Some nouns are far more common than others (random()^1.5 over the list).
-INSERT INTO products (seller_id, title, description, price, currency, created_at)
+INSERT INTO products (seller_id, title, description, price_cents, currency, created_at)
 SELECT u.id,
        af.adj_form || ' ' || n.nom_sg,
        CASE WHEN s.r_desc < 0.7 THEN
@@ -82,7 +82,7 @@ SELECT u.id,
          END
        END,
        -- sum of three uniforms ~ a bell curve; exp() turns it into a log-normal price, median ~35
-       GREATEST(0.99, LEAST(99999.99, round(exp(3.5 + 4 * (s.r1 + s.r2 + s.r3 - 1.5))::numeric, 2))),
+       GREATEST(99, LEAST(9999999, round(exp(3.5 + 4 * (s.r1 + s.r2 + s.r3 - 1.5))::numeric * 100)::int)),
        CASE WHEN s.r_cur < 0.70 THEN 'USD'
             WHEN s.r_cur < 0.90 THEN 'EUR'
             WHEN s.r_cur < 0.96 THEN 'GBP'
@@ -106,7 +106,7 @@ CROSS JOIN LATERAL (
 
 -- Products numbered inside each currency: an order may contain only products of its own currency.
 CREATE TEMP TABLE _p AS
-SELECT id, currency, price, row_number() OVER (PARTITION BY currency ORDER BY id) AS rn FROM products;
+SELECT id, currency, price_cents, row_number() OVER (PARTITION BY currency ORDER BY id) AS rn FROM products;
 CREATE UNIQUE INDEX ON _p (currency, rn);
 CREATE TEMP TABLE _pc AS SELECT currency, count(*)::int AS n FROM products GROUP BY currency;
 
@@ -155,11 +155,11 @@ JOIN _u AS u ON u.rn = o.buyer_rn;
 -- Order items -------------------------------------------------------------------------------
 -- The first product of an order is picked with a skew (random()^3): bestsellers land in many orders.
 -- The next ones are its neighbours in the numbering, so products in one order never repeat.
-INSERT INTO order_items (order_id, product_id, quantity, unit_price)
+INSERT INTO order_items (order_id, product_id, quantity, unit_price_cents)
 SELECT o.id,
        p.id,
        1 + floor(power(random(), 3) * 5)::int,
-       GREATEST(0, round((p.price * (0.85 + 0.3 * random()))::numeric, 2))   -- the price drifted since then
+       GREATEST(0, round(p.price_cents * (0.85 + 0.3 * random()))::int)   -- the price drifted since then
 FROM _o AS o
 JOIN _pc AS c ON c.currency = o.currency
 CROSS JOIN LATERAL generate_series(0, o.n_items - 1) AS k

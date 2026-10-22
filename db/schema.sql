@@ -2,9 +2,9 @@
 --   npm run db:schema
 -- The script runs in one transaction: it either creates everything or nothing.
 --
--- Money is numeric(12,2), never float. The API contract uses integer cents (price_cents),
--- so the service layer converts: price_cents = round(price * 100).
--- An order's total is not stored: it is sum(quantity * unit_price) over its items, so it cannot
+-- Money is integer minor units (cents), never float or numeric: the same representation as the API
+-- contract (price_cents), so nothing is converted between the database, the entities and the API.
+-- An order's total is not stored: it is sum(quantity * unit_price_cents) over its items, so it cannot
 -- disagree with them.
 
 CREATE TABLE users (
@@ -21,7 +21,7 @@ CREATE TABLE products (
   seller_id    uuid          NOT NULL REFERENCES users (id) ON DELETE RESTRICT,
   title        text          NOT NULL CHECK (char_length(title) BETWEEN 1 AND 200),
   description  text          CHECK (char_length(description) <= 2000),
-  price        numeric(12,2) NOT NULL CHECK (price >= 0),
+  price_cents  integer       NOT NULL CHECK (price_cents >= 0),
   currency     text          NOT NULL CHECK (currency ~ '^[A-Z]{3}$'),
   created_at   timestamptz   NOT NULL DEFAULT now(),
   -- Catalogue search (query q4). Generated, so nobody maintains it by hand on INSERT/UPDATE.
@@ -47,7 +47,7 @@ CREATE TABLE order_items (
   product_id  uuid          NOT NULL REFERENCES products (id) ON DELETE RESTRICT,
   quantity    integer       NOT NULL CHECK (quantity BETWEEN 1 AND 100),
   -- Price at the time of purchase: a later price change must not rewrite old orders.
-  unit_price  numeric(12,2) NOT NULL CHECK (unit_price >= 0),
+  unit_price_cents integer   NOT NULL CHECK (unit_price_cents >= 0),
   -- One row per product in an order; a repeat is an increase of quantity.
   PRIMARY KEY (order_id, product_id)
 );

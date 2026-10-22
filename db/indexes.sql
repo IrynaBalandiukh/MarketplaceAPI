@@ -12,8 +12,8 @@ CREATE INDEX IF NOT EXISTS idx_users_display_name_lower ON users (lower(display_
 CREATE INDEX IF NOT EXISTS idx_orders_pending_created_at ON orders (created_at) INCLUDE (id, buyer_id)
   WHERE status = 'pending';
 
--- q3: equality on currency, range on price, sorted by price. Equality column first, range second.
-CREATE INDEX IF NOT EXISTS idx_products_currency_price_id ON products (currency, price, id);
+-- q3: equality on currency, range on price_cents, sorted by price_cents. Equality column first, range second.
+CREATE INDEX IF NOT EXISTS idx_products_currency_price_id ON products (currency, price_cents, id);
 
 -- q4: full-text search over the generated products.search_vector column.
 CREATE INDEX IF NOT EXISTS idx_products_search_vector ON products USING GIN (search_vector);
