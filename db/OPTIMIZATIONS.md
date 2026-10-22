@@ -84,8 +84,10 @@ Seq Scan, що перечитував усі 2365 сторінок `orders` за
 ## q3: Каталог: товари у валюті в діапазоні цін
 
 ```sql
-SELECT id, title, price FROM products WHERE currency = 'EUR' AND price BETWEEN 400 AND 450 ORDER BY price, id LIMIT 20
+SELECT id, title, price_cents FROM products WHERE currency = 'EUR' AND price_cents BETWEEN 40000 AND 45000 ORDER BY price_cents, id LIMIT 20
 ```
+
+> Колонка `price` (numeric) стала `price_cents` (integer); плани нижче зняті ще до цієї зміни, їх треба перезняти (`EXPLAIN (ANALYZE, BUFFERS)`) на новій схемі.
 
 До (без індексу):
 
